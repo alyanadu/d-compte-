@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Décompte jusqu'au 17 août</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      color: #333;
+      padding: 20px;
+      margin: 0;
+      transition: background 1s ease, color 1s ease;
+    }
+
+    h1 {
+      text-align: center;
+      color: inherit; /* prendra la couleur selon le thème */
+      margin-bottom: 10px;
+    }
+
+    #countdown, #dodos {
+      text-align: center;
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: inherit;
+    }
+
+    .calendar-table {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      border-collapse: collapse;
+      background: rgba(255,255,255,0.8);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .calendar-table th {
+      padding: 8px;
+      background-color: #fcd6e4;
+      color: #a63a5f;
+    }
+
+    .calendar-table td {
+      height: 100px;
+      border: 1px solid #f5c2d1;
+      vertical-align: top;
+      text-align: center;
+      background: white;
+      position: relative;
+      padding: 5px;
+    }
+
+    .calendar-table label {
+      font-weight: bold;
+      font-size: 0.9em;
+      display: block;
+      margin-bottom: 5px;
+      color: #a63a5f;
+    }
+
+    .calendar-table input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #cc4070;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Décompte jusqu'au 17 août 2025</h1>
+<div id="countdown">Chargement...</div>
+<div id="dodos">Chargement...</div>
+<table class="calendar-table">
+  <thead>
+    <tr>
+      <th>Lun</th>
+      <th>Mar</th>
+      <th>Mer</th>
+      <th>Jeu</th>
+      <th>Ven</th>
+      <th>Sam</th>
+      <th>Dim</th>
+    </tr>
+  </thead>
+  <tbody id="calendar-body"></tbody>
+</table>
+
+<script>
+  const startDate = new Date(2025, 6, 27); // 27 juillet
+  const endDate = new Date(2025, 7, 17, 12, 51); // 17 août 12:51
+
+  // Liste des thèmes d'ambiance journaliers (au moins un pour chaque jour)
+  const dailyThemes = [
+    {
+      background: 'linear-gradient(to right, #ff9a9e, #fad0c4)', // rose doux
+      color: '#6b0f1a',
+    },
+    {
+      background: 'linear-gradient(to right, #a18cd1, #fbc2eb)', // violet pastel
+      color: '#3d0a62',
+    },
+    {
+      background: 'linear-gradient(to right, #fbc2eb, #a6c1ee)', // rose-bleu clair
+      color: '#2e3a87',
+    },
+    {
+      background: 'linear-gradient(to right, #fad0c4, #ffd1ff)', // pêche clair
+      color: '#5d2140',
+    },
+    {
+      background: 'linear-gradient(to right, #ffecd2, #fcb69f)', // pêche orangé
+      color: '#7a3e1e',
+    },
+    {
+      background: 'linear-gradient(to right, #a1c4fd, #c2e9fb)', // bleu clair ciel
+      color: '#104e8b',
+    },
+    {
+      background: 'linear-gradient(to right, #d4fc79, #96e6a1)', // vert clair
+      color: '#2e5d33',
+    }
+  ];
+
+  // Calculer index du thème selon la date (lundi = 0)
+  function getMondayBasedDayIndex(jsDay) {
+    return (jsDay + 6) % 7;
+  }
+
+  // Applique le thème d'ambiance du jour
+  function applyDailyTheme() {
+    const now = new Date();
+    const dayIndex = getMondayBasedDayIndex(now.getDay());
+    const theme = dailyThemes[dayIndex] || dailyThemes[0];
+
+    document.body.style.background = theme.background;
+    document.body.style.color = theme.color;
+
+    // Mettre à jour aussi le header h1 si besoin
+    document.querySelector('h1').style.color = theme.color;
+    document.getElementById('countdown').style.color = theme.color;
+    document.getElementById('dodos').style.color = theme.color;
+  }
+
+  function createCalendarTable() {
+    const tbody = document.getElementById('calendar-body');
+    let current = new Date(startDate);
+    let weekRow = document.createElement('tr');
+
+    for (let i = 0; i < getMondayBasedDayIndex(current.getDay()); i++) {
+      const emptyCell = document.createElement('td');
+      weekRow.appendChild(emptyCell);
+    }
+
+    while (current <= endDate) {
+      const isoDate = current.toISOString().split('T')[0];
+      const cell = document.createElement('td');
+      const label = document.createElement('label');
+      const checkbox = document.createElement('input');
+
+      label.textContent = `${current.getDate()} ${current.toLocaleString('fr-FR', { month: 'short' })}`;
+      label.setAttribute('for', isoDate);
+
+      checkbox.type = 'checkbox';
+      checkbox.id = isoDate;
+
+      if (localStorage.getItem('check_' + isoDate) === 'true') {
+        checkbox.checked = true;
+      }
+
+      checkbox.addEventListener('change', () => {
+        localStorage.setItem('check_' + isoDate, checkbox.checked);
+      });
+
+      cell.appendChild(label);
+      cell.appendChild(checkbox);
+      weekRow.appendChild(cell);
+
+      if (getMondayBasedDayIndex(current.getDay()) === 6) {
+        tbody.appendChild(weekRow);
+        weekRow = document.createElement('tr');
+      }
+
+      current.setDate(current.getDate() + 1);
+    }
+
+    if (weekRow.children.length > 0) {
+      while (weekRow.children.length < 7) {
+        const emptyCell = document.createElement('td');
+        weekRow.appendChild(emptyCell);
+      }
+      tbody.appendChild(weekRow);
+    }
+  }
+
+  function updateCountdown() {
+    const now = new Date();
+    const diff = endDate - now;
+
+    if (diff <= 0) {
+      document.getElementById('countdown').textContent = "C’est terminé 🎉 !";
+      document.getElementById('dodos').textContent = "";
+      return;
+    }
+
+    const jours = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const heures = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const secondes = Math.floor((diff / 1000) % 60);
+
+    document.getElementById('countdown').textContent =
+      `Il reste ${jours} jour${jours !== 1 ? 's' : ''}, ${heures}h ${minutes}min ${secondes}s.`;
+
+    const demainMinuit = new Date(now);
+    demainMinuit.setHours(24,0,0,0);
+    const diffDodos = endDate - demainMinuit;
+    const dodos = diffDodos > 0 ? Math.ceil(diffDodos / (1000*60*60*24)) : 0;
+
+    document.getElementById('dodos').textContent =
+      `Il reste ${dodos} dodo${dodos !== 1 ? 's' : ''} avant de le revoir !`;
+  }
+
+  // Lancement des fonctions
+  applyDailyTheme();
+  createCalendarTable();
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+</script>
+
+</body>
+</html>
