@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Décompte jusqu'au 17 août</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #ffe6f0;
+      color: #333;
+      padding: 20px;
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #d94f8a;
+    }
+
+    #countdown {
+      font-size: 1.3em;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 20px;
+      color: #b34f70;
+    }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .day {
+      background: #fff0f6;
+      border: 2px solid #d94f8a;
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .day label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #a53865;
+    }
+
+    .day input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 500px) {
+      .calendar {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Décompte jusqu'au 17 août</h1>
+<div id="countdown">Chargement du décompte...</div>
+
+<div class="calendar" id="calendar"></div>
+
+<script>
+  const startDate = new Date(2025, 6, 27); // 27 juillet
+  const endDate = new Date(2025, 7, 17, 0, 0, 0); // 17 août à 00h00
+
+  const jours = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+
+  function buildCalendar() {
+    const calendar = document.getElementById('calendar');
+    calendar.innerHTML = '';
+
+    let current = new Date(startDate);
+
+    while (current <= endDate) {
+      const dayStr = current.toISOString().split('T')[0]; // yyyy-mm-dd
+      const weekday = jours[current.getDay()];
+      const dateDisplay = `${weekday} ${current.getDate()} ${current.toLocaleString('fr-FR', { month: 'long' })}`;
+
+      const dayDiv = document.createElement('div');
+      dayDiv.className = 'day';
+
+      const label = document.createElement('label');
+      label.setAttribute('for', dayStr);
+      label.textContent = dateDisplay;
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.id = dayStr;
+
+      // Récupérer la sauvegarde
+      const saved = localStorage.getItem('checkbox_' + dayStr);
+      if (saved === 'true') checkbox.checked = true;
+
+      checkbox.addEventListener('change', () => {
+        localStorage.setItem('checkbox_' + dayStr, checkbox.checked);
+      });
+
+      dayDiv.appendChild(label);
+      dayDiv.appendChild(checkbox);
+      calendar.appendChild(dayDiv);
+
+      current.setDate(current.getDate() + 1);
+    }
+  }
+
+  function updateCountdown() {
+    const now = new Date();
+    const diff = endDate - now;
+
+    if (diff <= 0) {
+      document.getElementById('countdown').textContent = "C'est terminé ! 🎉";
+      return;
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const seconds = Math.floor((diff / 1000) % 60);
+
+    document.getElementById('countdown').textContent =
+      `Il reste ${days} jour${days !== 1 ? 's' : ''}, ${hours}h ${minutes}min ${seconds}s jusqu'au 17 août.`;
+  }
+
+  buildCalendar();
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+</script>
+
+</body>
+</html>
