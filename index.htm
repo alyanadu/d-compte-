@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Décompte jusqu'au 17 août</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #ffe6f0;
+    color: #333;
+    padding: 20px;
+    max-width: 600px;
+    margin: auto;
+  }
+  h1 {
+    text-align: center;
+    color: #d94f8a;
+  }
+  #countdown {
+    font-size: 1.3em;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #b34f70;
+  }
+  .calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 12px;
+  }
+  .day {
+    background: #fff0f6;
+    border: 2px solid #d94f8a;
+    border-radius: 10px;
+    padding: 10px 8px;
+    text-align: center;
+    user-select: none;
+  }
+  .day label {
+    cursor: pointer;
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #a53865;
+  }
+  .day input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+  }
+  @media (max-width: 400px) {
+    .calendar {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+</style>
+</head>
+<body>
+
+<h1>Décompte jusqu'au 17 août</h1>
+<div id="countdown">Chargement du décompte...</div>
+
+<div class="calendar" id="calendar"></div>
+
+<script>
+  // Dates
+  const startDate = new Date(2025, 6, 27); // 27 juillet 2025 (mois 0-based)
+  const endDate = new Date(2025, 7, 17);   // 17 août 2025
+
+  // Affiche le calendrier et cases à cocher
+  function buildCalendar() {
+    const calendar = document.getElementById('calendar');
+    calendar.innerHTML = '';
+
+    let current = new Date(startDate);
+
+    while (current <= endDate) {
+      const dayNumber = current.getDate();
+      const dayStr = current.toISOString().slice(0, 10); // yyyy-mm-dd
+
+      // Crée la case à cocher
+      const dayDiv = document.createElement('div');
+      dayDiv.className = 'day';
+
+      const label = document.createElement('label');
+      label.setAttribute('for', dayStr);
+      label.textContent = `Jour ${dayNumber}`;
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.id = dayStr;
+
+      // Récupérer la sauvegarde dans localStorage
+      const saved = localStorage.getItem('checkbox_' + dayStr);
+      if (saved === 'true') checkbox.checked = true;
+
+      // Sauvegarder quand on coche/décoche
+      checkbox.addEventListener('change', () => {
+        localStorage.setItem('checkbox_' + dayStr, checkbox.checked);
+      });
+
+      dayDiv.appendChild(label);
+      dayDiv.appendChild(checkbox);
+      calendar.appendChild(dayDiv);
+
+      current.setDate(current.getDate() + 1);
+    }
+  }
+
+  // Met à jour le décompte jours restants
+  function updateCountdown() {
+    const now = new Date();
+    const diffTime = endDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    const countdown = document.getElementById('countdown');
+    if (diffDays > 0) {
+      countdown.textContent = `Il reste ${diffDays} jour${diffDays > 1 ? 's' : ''} jusqu'au 17 août.`;
+    } else if (diffDays === 0) {
+      countdown.textContent = "C'est le 17 août, c'est aujourd'hui !";
+    } else {
+      countdown.textContent = "La date est passée.";
+    }
+  }
+
+  buildCalendar();
+  updateCountdown();
+
+  // Met à jour le décompte toutes les heures
+  setInterval(updateCountdown, 3600000);
+</script>
+
+</body>
+</html>
