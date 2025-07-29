@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Décompte jusqu'au 17 août</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #ffeef5;
+      color: #333;
+      padding: 15px 10px;
+      margin: 0;
+    }
+
+    h1 {
+      text-align: center;
+      color: #cc4070;
+      font-size: 1.4em;
+      margin-bottom: 10px;
+    }
+
+    #countdown {
+      text-align: center;
+      font-size: 1.1em;
+      font-weight: bold;
+      color: #a6335d;
+      margin-bottom: 8px;
+    }
+
+    #dodos {
+      text-align: center;
+      font-size: 1em;
+      color: #a6335d;
+      margin-bottom: 15px;
+    }
+
+    #progress-container {
+      width: 95%;
+      max-width: 600px;
+      margin: 0 auto 20px;
+      background: #fcd6e4;
+      border-radius: 15px;
+      height: 18px;
+      overflow: hidden;
+    }
+
+    #progress-bar {
+      height: 100%;
+      background-color: #cc4070;
+      width: 0%;
+      border-radius: 15px 0 0 15px;
+      transition: width 0.5s ease;
+    }
+
+    #progress-text {
+      text-align: center;
+      font-weight: bold;
+      color: #a6335d;
+      margin-top: 5px;
+      font-size: 1em;
+    }
+
+    .calendar-table {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      border-collapse: collapse;
+      table-layout: fixed; /* Pour forcer largeur égale colonnes */
+      font-size: 12px;
+    }
+
+    .calendar-table th {
+      padding: 6px 3px;
+      background-color: #fcd6e4;
+      color: #a63a5f;
+      font-size: 0.85em;
+    }
+
+    .calendar-table td {
+      height: 90px;
+      border: 1px solid #f5c2d1;
+      vertical-align: top;
+      text-align: center;
+      background: white;
+      position: relative;
+      padding: 4px 2px 2px;
+      overflow-wrap: break-word;
+    }
+
+    /* Date plus visible */
+    .calendar-table td label.date-label {
+      font-size: 1.1em;
+      font-weight: bold;
+      color: #a10040;
+      display: block;
+      margin-bottom: 3px;
+      user-select: none;
+    }
+
+    .checkbox-group {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    /* Cases petites (matin + aprem) */
+    .checkbox-group input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #cc4070;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    /* Case soir plus grosse */
+    .evening-checkbox {
+      transform: scale(1.3);
+      margin-top: 2px;
+      accent-color: #cc4070;
+      cursor: pointer;
+    }
+
+    /* Retirer labels textuels des cases */
+    label.checkbox-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .heart {
+      position: absolute;
+      top: 25px;
+      left: 50%;
+      transform: translateX(-50%) scale(0);
+      color: #cc4070;
+      font-size: 20px;
+      pointer-events: none;
+      animation: popHeart 0.6s forwards;
+      z-index: 1;
+    }
+
+    @keyframes popHeart {
+      0% { transform: translateX(-50%) scale(0); opacity: 1; }
+      50% { transform: translateX(-50%) scale(1.3); opacity: 1; }
+      100% { transform: translateX(-50%) scale(1); opacity: 0; }
+    }
+
+    /* Responsive pour mobile */
+    @media (max-width: 480px) {
+      body {
+        padding: 12px 6px;
+      }
+
+      h1 {
+        font-size: 1.2em;
+      }
+
+      .calendar-table {
+        font-size: 10px;
+      }
+
+      .calendar-table td {
+        height: 75px;
+        padding: 3px 1px 1px;
+      }
+
+      .calendar-table td label.date-label {
+        font-size: 1em;
+      }
+
+      .checkbox-group {
+        gap: 4px;
+      }
+
+      .checkbox-group input[type="checkbox"] {
+        width: 14px;
+        height: 14px;
+      }
+
+      .evening-checkbox {
+        transform: scale(1.2);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Décompte jusqu'au 17 août 2025</h1>
+<div id="countdown">Chargement...</div>
+<div id="dodos">Chargement...</div>
+
+<div id="progress-container">
+  <div id="progress-bar"></div>
+</div>
+<div id="progress-text">0%</div>
+
+<table class="calendar-table" aria-label="Calendrier de décompte">
+  <thead>
+    <tr>
+      <th>Lun</th><th>Mar</th><th>Mer</th><th>Jeu</th><th>Ven</th><th>Sam</th><th>Dim</th>
+    </tr>
+  </thead>
+  <tbody id="calendar-body"></tbody>
+</table>
+
+<script>
+  const startDate = new Date(2025, 6, 27); // 27 juillet 2025
+  const endDate = new Date(2025, 7, 17, 12, 51); // 17 août 12:51
+
+  function getMondayBasedDayIndex(jsDay) {
+    return (jsDay + 6) % 7;
+  }
+
+  function createHeartAnimation(cell) {
+    const heart = document.createElement('div');
+    heart.className = 'heart';
+    heart.textContent = '♡';
+    cell.appendChild(heart);
+    setTimeout(() => heart.remove(), 600);
+  }
+
+  function createCalendarTable() {
+    const tbody = document.getElementById('calendar-body');
+    let current = new Date(startDate);
+    let weekRow = document.createElement('tr');
+
+    for (let i = 0; i < getMondayBasedDayIndex(current.getDay()); i++) {
+      weekRow.appendChild(document.createElement('td'));
+    }
+
+    while (current <= endDate) {
+      const isoDate = current.toISOString().split('T')[0];
+      const cell = document.createElement('td');
+
+      const dateLabel = document.createElement('label');
+      dateLabel.className = 'date-label';
+      dateLabel.textContent = `${current.getDate()} ${current.toLocaleString('fr-FR', { month: 'short' })}`;
+      cell.appendChild(dateLabel);
+
+      // Groupe des 2 petites cases (matin + aprem)
+      const checkboxGroup = document.createElement('div');
+      checkboxGroup.className = 'checkbox-group';
+
+      ['matin', 'aprem'].forEach(moment => {
+        const wrapper = document.createElement('label');
+        wrapper.className = 'checkbox-wrapper';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.classList.add('day-checkbox');
+        checkbox.dataset.key = `${isoDate}_${moment}`;
+
+        if (localStorage.getItem('check_' + checkbox.dataset.key) === 'true') {
+          checkbox.checked = true;
+        }
+
+        checkbox.addEventListener('change', () => {
+          localStorage.setItem('check_' + checkbox.dataset.key, checkbox.checked);
+          updateProgress();
+          if (checkbox.checked) createHeartAnimation(cell);
+        });
+
+        wrapper.appendChild(checkbox);
+        checkboxGroup.appendChild(wrapper);
+      });
+
+      cell.appendChild(checkboxGroup);
+
+      // Case soir plus grosse en dessous
+      const eveningWrapper = document.createElement('label');
+      eveningWrapper.className = 'checkbox-wrapper';
+      eveningWrapper.style.justifyContent = 'center';
+      eveningWrapper.style.marginTop = '4px';
+
+      const eveningCheckbox = document.createElement('input');
+      eveningCheckbox.type = 'checkbox';
+      eveningCheckbox.classList.add('day-checkbox', 'evening-checkbox');
+      eveningCheckbox.dataset.key = `${isoDate}_soir`;
+
+      if (localStorage.getItem('check_' + eveningCheckbox.dataset.key) === 'true') {
+        eveningCheckbox.checked = true;
+      }
+
+      eveningCheckbox.addEventListener('change', () => {
+        localStorage.setItem('check_' + eveningCheckbox.dataset.key, eveningCheckbox.checked);
+        updateProgress();
+        if (eveningCheckbox.checked) createHeartAnimation(cell);
+      });
+
+      eveningWrapper.appendChild(eveningCheckbox);
+      cell.appendChild(eveningWrapper);
+
+      weekRow.appendChild(cell);
+
+      if (getMondayBasedDayIndex(current.getDay()) === 6) {
+        tbody.appendChild(weekRow);
+        weekRow = document.createElement('tr');
+      }
+
+      current.setDate(current.getDate() + 1);
+    }
+
+    if (weekRow.children.length > 0) {
+      while (weekRow.children.length < 7) {
+        weekRow.appendChild(document.createElement('td'));
+      }
+      tbody.appendChild(weekRow);
+    }
+  }
+
+  function updateCountdown() {
+    const now = new Date();
+    const diff = endDate - now;
+
+    if (diff <= 0) {
+      document.getElementById('countdown').textContent = "C’est terminé 🎉 !";
+      document.getElementById('dodos').textContent = "";
+      updateProgress();
+      return;
+    }
+
+    const jours = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const heures = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const secondes = Math.floor((diff / 1000) % 60);
+
+    document.getElementById('countdown').textContent =
+      `Il reste ${jours} jour${jours !== 1 ? 's' : ''}, ${heures}h ${minutes}min ${secondes}s.`;
+
+    // Dodos actualisés à 5h
+    const prochainCinqHeures = new Date(now);
+    if (now.getHours() >= 5) {
+      prochainCinqHeures.setDate(prochainCinqHeures.getDate() + 1);
+    }
+    prochainCinqHeures.setHours(5, 0, 0, 0);
+
+    const diffDodos = endDate - prochainCinqHeures;
+    const dodos = diffDodos > 0 ? Math.ceil(diffDodos / (1000 * 60 * 60 * 24)) : 0;
+
+    document.getElementById('dodos').textContent =
+      `Il reste ${dodos} dodo${dodos !== 1 ? 's' : ''} avant de le revoir !`;
+
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const checkboxes = document.querySelectorAll('.day-checkbox');
+    const total = checkboxes.length;
+    let checkedCount = 0;
+    checkboxes.forEach(cb => {
+      if (cb.checked) checkedCount++;
+    });
+    const percent = total ? Math.round((checkedCount / total) * 100) : 0;
+
+    document.getElementById('progress-bar').style.width = percent + '%';
+    document.getElementById('progress-text').textContent = `${percent}%`;
+  }
+
+  createCalendarTable();
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+</script>
+
+</body>
+</html>
